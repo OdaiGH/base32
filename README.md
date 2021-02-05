@@ -1,1 +1,1 @@
-base32
+### Decoding not yet functional!
