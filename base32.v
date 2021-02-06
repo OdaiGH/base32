@@ -1,13 +1,11 @@
 module base32
 
-import regex
-
-// Encode byte array to base32 with Bitcoin alphabet
+// encode encodes `input` into a base32 string
 pub fn encode(input string) ?string {
 	return encode_walpha(input, alphabets['std'])
 }
 
-// Encode byte array to base32 with custom aplhabet
+// encode_walpha encodes `input` into a base32 string based on `alphabet`
 pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
 	if input.len == 0 {
 		return error('base32 > encode_walpha(input string, ...): input cannot be empty')
@@ -38,18 +36,20 @@ pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
 	return encoded
 }
 
+// decode decodes `input`, a base32 string, into an ASCII string
 pub fn decode(input string) ?string {
 	return decode_walpha(input, alphabets['std'])
 }
 
+// decode decodes `input`, a base32 string, into an ASCII string based on `alphabet`
 pub fn decode_walpha(input string, alphabet &Alphabet) ?string {
 	if input.len == 0 {
 		return error('base32 > decode_walpha(input string, ...): input cannot be empty')
 	}
 
-	// TODO: Add valididation process here.
-	// Validation has temporarily been removed because
-	// it doesn't work correctly with non-alphanumerics
+	if validate_walpha(input, alphabet) == false {
+		return error('base32 > decode_walpha(input string, alphabet &Alphabet): input is an invalid base32 string')
+	}
 
 	// convert to 5-bit binary chunks
 	data := input.bytes()
@@ -72,15 +72,16 @@ pub fn decode_walpha(input string, alphabet &Alphabet) ?string {
 	return decoded.bytestr()
 }
 
-pub fn validate(input string) ?bool {
+// validate checks if `input` is a base32 string
+pub fn validate(input string) bool {
 	return validate_walpha(input, alphabets['std'])
 }
 
-// Regex doesn't work when you use non-alphanumeric characters.
-// Going to have to rework the validation process
-pub fn validate_walpha(input string, alphabet &Alphabet) ?bool {
-	// created in new_alphabet(string)
-	mut re := regex.regex_opt(alphabet.regex_pattern) or {
+// validate_walpha checks if `input` is a base32 string based on `alphabet`
+pub fn validate_walpha(input string, alphabet &Alphabet) bool {
+
+	/// regex doesn't work when input contains non-alphanumeric characters ///
+	/*mut re := regex.regex_opt(alphabet.regex_pattern) or {
 		eprintln('Err: unable to validate string')
 		return error(err)
 	}
@@ -90,5 +91,22 @@ pub fn validate_walpha(input string, alphabet &Alphabet) ?bool {
 		return true
 	}
 
-	return false
+	return false*/
+
+	mut is_valid := true
+	for b in input {
+		// if byte is in alphabet or is the padding char
+		if alphabet.encode.index_byte(b) >= 0 || rune(b) == alphabet.pad_char {
+			if input.index_any(alphabet.pad_char.str()) >= 0 {
+				// check if every char after the first padding char is also a padding char
+				padding_substr := input[input.index_any(alphabet.pad_char.str())..input.len]
+				if padding_substr.contains_any(alphabet.encode) {
+					is_valid = false
+				}
+			}
+		} else {
+			is_valid = false
+		}
+	}
+	return is_valid
 }
