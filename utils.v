@@ -17,7 +17,7 @@ fn array_map<T>(fun fn (T) T, arr []T) []T {
 	return array_map_with_ret_generic<T,T>(fun, arr)
 }
 
-fn bytes_to_binary(bytes []byte) string {
+fn bytes_to_bin(bytes []byte) string {
 	ret := array_map_with_ret_generic<byte,string>(fn (b byte) string {
 		mut ret := ''
 		for i := 7; i >= 0; i-- {
@@ -27,6 +27,16 @@ fn bytes_to_binary(bytes []byte) string {
 		return ret
 	}, bytes)
 	return ret.join('')
+}
+
+fn bin_to_bytes(bin []string) []byte {
+	ret := array_map_with_ret_generic<string,byte>(fn (bin string) byte {
+		// just because I had trouble remembering
+		// bin inside this nesting is distinct from bin passed to this function
+		ascii_code := bin_to_dec(bin.int())
+		return byte(ascii_code)
+	}, bin)
+	return ret
 }
 
 fn split_into_chunks(str string) []string {
@@ -50,7 +60,7 @@ fn split_into_chunks(str string) []string {
 
 // usually you would want n to be i128 because
 // binary can get really long, but since this'll
-// only be used for 5-bit chunks, this will be fine
+// only be used for 5 and 8 bit chunks, this will be fine
 fn bin_to_dec(n int) int {
 	mut dec := 0
 	mut x := n
@@ -60,4 +70,12 @@ fn bin_to_dec(n int) int {
 		x /= 10
 	}
 	return dec
+}
+
+fn dec_to_bin(n int) string {
+	mut ret := ''
+	for i := 4; i >= 0; i-- {
+		ret += if n & (1 << i) != 0 {'1'} else {'0'}
+	}
+	return ret
 }

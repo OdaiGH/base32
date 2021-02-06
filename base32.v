@@ -3,19 +3,19 @@ module base32
 import regex
 
 // Encode byte array to base32 with Bitcoin alphabet
-pub fn encode(input string) string {
+pub fn encode(input string) ?string {
 	return encode_walpha(input, alphabets['std'])
 }
 
 // Encode byte array to base32 with custom aplhabet
-pub fn encode_walpha(input string, alphabet &Alphabet) string {
+pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
 	if input.len == 0 {
-		return ''
+		return error('base32 > encode_walpha(input string, ...): input cannot be empty')
 	}
 	
 	// create binary string zeropadded to 8 bits
 	mut data := input.bytes()
-	mut binary := bytes_to_binary(data)
+	mut binary := bytes_to_bin(data)
 
 	// split into 5 bit chunks
 	// trailing chunk should consist of 5 bits
@@ -28,26 +28,49 @@ pub fn encode_walpha(input string, alphabet &Alphabet) string {
 	}
 
 	// pad the encoded string
-	if encoded.len % 8 != 0 {
-		pad := 8 - encoded.len % 8
-		encoded += alphabet.pad_char.str().repeat(pad)
+	if alphabet.pad_char != padding['nopad'] {
+		if encoded.len % 8 != 0 {
+			pad := 8 - encoded.len % 8
+			encoded += alphabet.pad_char.str().repeat(pad)
+		}
 	}
 
 	return encoded
 }
 
-pub fn decode(input string) string {
+pub fn decode(input string) ?string {
 	return decode_walpha(input, alphabets['std'])
 }
 
-pub fn decode_walpha(input string, alphabet &Alphabet) string {
+pub fn decode_walpha(input string, alphabet &Alphabet) ?string {
 	if input.len == 0 {
-		return ''
+		return error('base32 > decode_walpha(input string, ...): input cannot be empty')
 	}
 
-	// TODO: finish decode process
+	is_valid := validate_walpha(input, alphabet)?
+	if is_valid == false {
+		return error('base32 > decode_walpha(input string, ...): input is not a valid base32 string')
+	}
 
-	return ''
+	// convert to 5-bit binary chunks
+	data := input.bytes()
+	mut chunks := []string{}
+	for b in data {
+		if rune(b) != alphabet.pad_char {
+			chunks << dec_to_bin(alphabet.encode.index_byte(b))
+		}
+	}
+
+	// combine 5-bit chunks and split into 8-bit chunks
+	bin := chunks.join('')
+	mut bin_chunks := []string{}
+	for i := 0; i <= bin.len-8; i += 8 {
+		bin_chunks << bin[i..i+8]
+	}
+
+	decoded := bin_to_bytes(bin_chunks)
+
+	return decoded.bytestr()
 }
 
 pub fn validate(input string) ?bool {
