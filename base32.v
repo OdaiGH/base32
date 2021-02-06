@@ -47,10 +47,9 @@ pub fn decode_walpha(input string, alphabet &Alphabet) ?string {
 		return error('base32 > decode_walpha(input string, ...): input cannot be empty')
 	}
 
-	is_valid := validate_walpha(input, alphabet)?
-	if is_valid == false {
-		return error('base32 > decode_walpha(input string, ...): input is not a valid base32 string')
-	}
+	// TODO: Add valididation process here.
+	// Validation has temporarily been removed because
+	// it doesn't work correctly with non-alphanumerics
 
 	// convert to 5-bit binary chunks
 	data := input.bytes()
@@ -77,6 +76,8 @@ pub fn validate(input string) ?bool {
 	return validate_walpha(input, alphabets['std'])
 }
 
+// Regex doesn't work when you use non-alphanumeric characters.
+// Going to have to rework the validation process
 pub fn validate_walpha(input string, alphabet &Alphabet) ?bool {
 	// created in new_alphabet(string)
 	mut re := regex.regex_opt(alphabet.regex_pattern) or {
