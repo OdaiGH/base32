@@ -5,8 +5,7 @@ pub fn encode(input string) ?string {
 	return encode_walpha(input, alphabets['std'])
 }
 
-// encode_walpha encodes `input` into a base32 string based on `alphabet`
-pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
+/*pub fn encode_walpha_old(input string, alphabet &Alphabet) ?string {
 	if input.len == 0 {
 		return error('base32 > encode_walpha(input string, ...): input cannot be empty')
 	}
@@ -34,6 +33,75 @@ pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
 	}
 
 	return encoded
+}*/
+
+// encode_walpha encodes `input` into a base32 string based on `alphabet`
+pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
+	if input.len == 0 {
+		return error('base32 > encode_walpha(input string, ...): input cannot be empty')
+	}
+	
+	mut src := input.bytes()
+	mut ret := ''
+	mut encoded := []byte{len: 8}
+
+	for src.len > 0 {
+		mut carry := byte(0)
+
+		match src.len {
+			4 {
+len4:			encoded[6] = alphabet.encode[carry|(src[3]<<3)&0x1F]
+				encoded[5] = alphabet.encode[(src[3]>>2)&0x1F]
+				carry = src[3] >> 7
+				goto len3
+			}
+			3 {
+len3:			encoded[4] = alphabet.encode[carry|(src[2]<<1)&0x1F]
+				carry = (src[2] >> 4) & 0x1F
+				goto len2
+			}
+			2 {
+len2:			encoded[3] = alphabet.encode[carry|(src[1]<<4)&0x1F]
+				encoded[2] = alphabet.encode[(src[1]>>1)&0x1F]
+				carry = (src[1] >> 6) & 0x1F
+				goto len1
+			}
+			1 {
+len1:			encoded[1] = alphabet.encode[carry|(src[0]<<2)&0x1F]
+				encoded[0] = alphabet.encode[src[0]>>3]
+			}
+			else {
+				encoded[7] = alphabet.encode[src[4]&0x1F]
+				carry = src[4] >> 5
+				goto len4
+			}
+		}
+
+		if src.len < 5 {
+			if alphabet.pad_char != padding['nopad'] {
+				encoded[7] = byte(alphabet.pad_char)
+				if src.len < 4 {
+					encoded[6] = byte(alphabet.pad_char)
+					encoded[5] = byte(alphabet.pad_char)
+					if src.len < 3 {
+						encoded[4] = byte(alphabet.pad_char)
+						if src.len < 2 {
+							encoded[3] = byte(alphabet.pad_char)
+							encoded[2] = byte(alphabet.pad_char)
+						}
+					}
+				}
+			}
+			ret += encoded.bytestr()
+			break
+		}
+
+		src = src[5..]
+		ret += encoded.bytestr()
+		encoded = []byte{len: 8}
+	}
+
+	return ret
 }
 
 // decode decodes `input`, a base32 string, into an ASCII string
@@ -79,20 +147,6 @@ pub fn validate(input string) bool {
 
 // validate_walpha checks if `input` is a base32 string based on `alphabet`
 pub fn validate_walpha(input string, alphabet &Alphabet) bool {
-
-	/// regex doesn't work when input contains non-alphanumeric characters ///
-	/*mut re := regex.regex_opt(alphabet.regex_pattern) or {
-		eprintln('Err: unable to validate string')
-		return error(err)
-	}
-
-	if re.find_all(input).len != 0
-			&& input.len % 8 == 0 {
-		return true
-	}
-
-	return false*/
-
 	mut is_valid := true
 	for b in input {
 		// if byte is in alphabet or is the padding char

@@ -16,7 +16,6 @@ const(
 )
 
 struct Alphabet {
-	regex_pattern string
 pub:
 	encode string
 	pad_char rune
@@ -28,7 +27,7 @@ mut:
 // If `alphabet.pad_char` is `padding['nopad']` then it just
 // returns `alphabet.encode`.
 pub fn (alphabet &Alphabet) str() string {
-	return alphabet.encode + if alphabet.pad_char != padding['nopad'] {alphabet.pad_char.str()}
+	return alphabet.encode + if alphabet.pad_char != padding['nopad'] {alphabet.pad_char.str()} else {''}
 }
 
 // new_alphabet instantiates `Alphabet` based on `input`
@@ -49,7 +48,6 @@ pub fn new_alphabet_wpadc(str string, pad_char rune) &Alphabet {
 	mut ret := &Alphabet{
 		encode: str
 		pad_char: pad_char
-		regex_pattern: '^[$str]+${padding['std']}{0,7}$'
 	}
 
 	mut distinct := 0
