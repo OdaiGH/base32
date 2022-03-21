@@ -53,18 +53,18 @@ pub fn encode_walpha(input string, alphabet &Alphabet) ?string {
 len4:			encoded[6] = alphabet.encode[carry|(src[3]<<3)&0x1F]
 				encoded[5] = alphabet.encode[(src[3]>>2)&0x1F]
 				carry = src[3] >> 7
-				goto len3
+				unsafe { goto len3 }
 			}
 			3 {
 len3:			encoded[4] = alphabet.encode[carry|(src[2]<<1)&0x1F]
 				carry = (src[2] >> 4) & 0x1F
-				goto len2
+				unsafe { goto len2 }
 			}
 			2 {
 len2:			encoded[3] = alphabet.encode[carry|(src[1]<<4)&0x1F]
 				encoded[2] = alphabet.encode[(src[1]>>1)&0x1F]
 				carry = (src[1] >> 6) & 0x1F
-				goto len1
+				unsafe { goto len1 }
 			}
 			1 {
 len1:			encoded[1] = alphabet.encode[carry|(src[0]<<2)&0x1F]
@@ -73,7 +73,7 @@ len1:			encoded[1] = alphabet.encode[carry|(src[0]<<2)&0x1F]
 			else {
 				encoded[7] = alphabet.encode[src[4]&0x1F]
 				carry = src[4] >> 5
-				goto len4
+				unsafe { goto len4 }
 			}
 		}
 
